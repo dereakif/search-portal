@@ -10,6 +10,7 @@ const search = async (filter) => {
   const { data } = await axios.get(`/api/search?q=${name}`);
   return data;
 };
+
 const renderResultBox = (data, query) => {
   if (!data) return;
   return (
@@ -37,7 +38,7 @@ const renderResultBox = (data, query) => {
 };
 export default function Home() {
   const [query, setQuery] = useState("");
-  const { data } = useQuery(["q", query], search);
+  const { data, refetch } = useQuery(["q", query], search, { enabled: false });
   return (
     <div className={styles.container}>
       <Head>
@@ -52,8 +53,11 @@ export default function Home() {
         aria-label="Search"
         value={query}
         onChange={(evt) => setQuery(evt.target.value)}
+        onKeyDown={(evt) => {
+          evt.code === "Enter" && refetch();
+        }}
       />
-      <button>Search</button>
+      <button onClick={refetch}>Search</button>
       {renderResultBox(data, query)}
     </div>
   );
