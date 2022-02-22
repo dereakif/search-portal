@@ -11,34 +11,39 @@ const search = async (filter) => {
   return data;
 };
 
-const renderResultBox = (data, query) => {
-  if (!data) return;
+const renderResultBox = ({ data, isError, query }) => {
+  if (!data || isError) return;
   return (
     <div className={styles.results}>
       {data.map((items, index) => {
-        return index > 2 ? (
-          <Link
-            key={items[2]}
-            href={{ pathname: "/results", query: { name: query } }}
-          >
-            show more
-          </Link>
-        ) : (
+        return (
           <div key={items[2]} className={styles.resultItems}>
             <div>
-              <p>{items[4] + " - " + items[5]}</p>
-              <p>{items[0] + " - " + items[3].slice(items[3].length - 4)}</p>
+              <p className="countryCity">{items[4] + " - " + items[5]}</p>
+              <p className="year">
+                {items[0] + " - " + items[3].slice(items[3].length - 4)}
+              </p>
             </div>
             <p>{"Email: " + items[2]}</p>
           </div>
         );
       })}
+      <p className={styles.showMore}>
+        <Link
+          key="showMore"
+          href={{ pathname: "/results", query: { name: query } }}
+        >
+          Show more...
+        </Link>
+      </p>
     </div>
   );
 };
 export default function Home() {
   const [query, setQuery] = useState("");
-  const { data, refetch } = useQuery(["q", query], search, { enabled: false });
+  const { data, refetch, error, isError } = useQuery(["q", query], search, {
+    enabled: false,
+  });
   return (
     <div className={styles.container}>
       <Head>
@@ -46,19 +51,30 @@ export default function Home() {
         <meta name="description" content="Search value!" />
         <link rel="icon" href="logo.jpg" />
       </Head>
-      <img src="logo.jpg" alt="logo" />
-      <input
-        type="text"
-        placeholder="search"
-        aria-label="Search"
-        value={query}
-        onChange={(evt) => setQuery(evt.target.value)}
-        onKeyDown={(evt) => {
-          evt.code === "Enter" && refetch();
-        }}
-      />
-      <button onClick={refetch}>Search</button>
-      {renderResultBox(data, query)}
+      <div className={styles.imgContainer}>
+        <img src="logo.jpg" alt="logo" />
+        <p className={styles.subtitle}>Search web app</p>
+      </div>
+      <div className={styles.ladingInputContainer}>
+        <div className="flex">
+          <input
+            className={isError ? "isError" : " customInput"}
+            type="text"
+            placeholder="Search by name..."
+            aria-label="Search"
+            value={query}
+            onChange={(evt) => setQuery(evt.target.value)}
+            onKeyDown={(evt) => {
+              evt.code === "Enter" && refetch();
+            }}
+          />
+          <button className="customButton" onClick={refetch}>
+            Search
+          </button>
+        </div>
+        {error?.message && <p className={styles.errorMessage}>Not Found!</p>}
+        {renderResultBox({ data, query, isError })}
+      </div>
     </div>
   );
 }

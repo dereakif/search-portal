@@ -34,8 +34,10 @@ const renderResult = (data) => {
   return data.results.map((items) => (
     <div key={items[2]} className={styles.resultItems}>
       <div>
-        <p>{items[4] + " - " + items[5]}</p>
-        <p>{items[0] + " - " + items[3].slice(items[3].length - 4)}</p>
+        <p className="countryCity">{items[4] + " - " + items[5]}</p>
+        <p className="year">
+          {items[0] + " - " + items[3].slice(items[3].length - 4)}
+        </p>
       </div>
       <p>{"Email: " + items[2]}</p>
     </div>
@@ -44,6 +46,7 @@ const renderResult = (data) => {
 
 export default ({ initialData, initialName }) => {
   const router = useRouter();
+  const [showList, setShowList] = useState(false);
   const [query, setQuery] = useState({
     name: initialName,
     page: 1,
@@ -55,12 +58,9 @@ export default ({ initialData, initialName }) => {
     getResultsOnCS,
     {
       enabled: false,
+      initialData,
     }
   );
-  let dataToShow = useMemo(() => {
-    if (!data) return initialData;
-    return data;
-  }, [data]);
   const handleNext = () => {
     if (data.pageCount > query.page) {
       setQuery((prev) => ({ ...prev, page: prev.page + 1 }));
@@ -87,65 +87,87 @@ export default ({ initialData, initialName }) => {
   }, [query.orderBy, query.page, query.ascending]);
 
   return (
-    <div className={styles}>
-      <img alt="logo" src="/logo.jpg" />
-      <input
-        value={query.name}
-        onChange={(evt) => setQuery((s) => ({ ...s, name: evt.target.value }))}
-        onKeyDown={(evt) => {
-          evt.code === "Enter" && search();
-        }}
-      />
-      <button onClick={search}>Search</button>
-
-      <div className="orderByContainer">
-        <p>Order by</p>
-        <ul className={styles.orderList}>
-          <li
-            className={styles.orderListItem}
-            onClick={() => {
-              setQuery((s) => ({ ...s, orderBy: "name", ascending: true }));
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <img alt="logo" src="/logo.jpg" />
+        <div className="flex w100">
+          <input
+            className="customInput"
+            value={query.name}
+            onChange={(evt) =>
+              setQuery((s) => ({ ...s, name: evt.target.value }))
+            }
+            onKeyDown={(evt) => {
+              evt.code === "Enter" && search();
             }}
-          >
-            Name ascending
-          </li>
-          <li
-            className={styles.orderListItem}
-            onClick={() => {
-              setQuery((s) => ({ ...s, orderBy: "name", ascending: false }));
-            }}
-          >
-            Name descending
-          </li>
-          <li
-            className={styles.orderListItem}
-            onClick={() => {
-              setQuery((s) => ({ ...s, orderBy: "year", ascending: true }));
-            }}
-          >
-            Year ascending
-          </li>
-          <li
-            className={styles.orderListItem}
-            onClick={() => {
-              setQuery((s) => ({ ...s, orderBy: "year", ascending: false }));
-            }}
-          >
-            Year descending
-          </li>
-        </ul>
+          />
+          <button className="customButton" onClick={search}>
+            Search
+          </button>
+        </div>
       </div>
-      <div>
-        {isError && "Something went wrong"
-          ? isLoading && "Loading..."
-          : renderResult(dataToShow)}
+      <div className={styles.orderBy}>
+        <p onClick={() => setShowList((s) => !s)}>↓ ↑ Order by</p>
+        {showList && (
+          <ul className={styles.orderList}>
+            <li
+              className={styles.orderListItem}
+              onClick={() => {
+                setQuery((s) => ({ ...s, orderBy: "name", ascending: true }));
+              }}
+            >
+              <span>Name ascending</span>
+            </li>
+            <li
+              className={styles.orderListItem}
+              onClick={() => {
+                setQuery((s) => ({ ...s, orderBy: "name", ascending: false }));
+              }}
+            >
+              <span>Name descending</span>
+            </li>
+            <li
+              className={styles.orderListItem}
+              onClick={() => {
+                setQuery((s) => ({ ...s, orderBy: "year", ascending: true }));
+              }}
+            >
+              <span>Year ascending</span>
+            </li>
+            <li
+              className={styles.orderListItem}
+              onClick={() => {
+                setQuery((s) => ({ ...s, orderBy: "year", ascending: false }));
+              }}
+            >
+              <span>Year descending</span>
+            </li>
+          </ul>
+        )}
       </div>
-      <div className="pagination">
-        <button onClick={handleFirst}>first</button>
-        <button onClick={handlePrev}>prev</button>
-        <span>{query.page}</span>
-        <button onClick={handleNext}>next</button>
-      </div>
+      {isError && "Something went wrong" ? (
+        isLoading && "Loading..."
+      ) : (
+        <div className={styles.results}>{renderResult(data)}</div>
+      )}
+      {data.pageCount > 1 && (
+        <div className={styles.pagination}>
+          <button onClick={handleFirst}>First</button>
+          <button onClick={handlePrev}>Previous</button>
+          {[...Array(data.pageCount).keys()].map((page) => (
+            <button
+              style={{
+                background: query.page === page + 1 ? "#204080" : "",
+                color: query.page === page + 1 ? "white" : "",
+              }}
+              onClick={() => setQuery((s) => ({ ...s, page: page + 1 }))}
+            >
+              {page + 1}
+            </button>
+          ))}
+          <button onClick={handleNext}>Next</button>
+        </div>
+      )}
     </div>
   );
 };
